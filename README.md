@@ -26,6 +26,7 @@ skill 会自动触发，跑完整条生产线。
 | 文件 | 作用 |
 |---|---|
 | `SKILL.md` | 主流程：算法映射、5 步生产线、输出格式、打分标准 |
+| `references/voice.md` | **声音档案**：账号主的风格特征与改写禁区 |
 | `references/hooks.md` | 10 类钩子模板 + 日语实例 + 平淡句改写对照 |
 | `references/formats.md` | 5 种视频形态的逐秒节奏表 + 剪辑清单 |
 | `references/topics.md` | 中日选题库、认知差清单、雷区 |
@@ -33,3 +34,4 @@ skill 会自动触发，跑完整条生产线。
 | `assets/script-template.md` | 交付模板 |
 | `examples/friends.md` | 成品示例（日语面向日本人） |
 | `examples/rules.md` | **已验证的成品**（中文口播 + 日本视角），逐句解剖 + 可复用模板 |
+| `examples/restart-tokyo.md` | 账号定位视频原稿（形态 G）|
