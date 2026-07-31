@@ -31,4 +31,5 @@ skill 会自动触发，跑完整条生产线。
 | `references/topics.md` | 中日选题库、认知差清单、雷区 |
 | `references/publish.md` | 标题、封面、标签、置顶评论、数据复盘 |
 | `assets/script-template.md` | 交付模板 |
-| `examples/friends.md` | 完整成品示例 |
+| `examples/friends.md` | 成品示例（日语面向日本人） |
+| `examples/rules.md` | **已验证的成品**（中文口播 + 日本视角），逐句解剖 + 可复用模板 |
