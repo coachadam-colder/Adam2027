@@ -27,6 +27,7 @@ skill 会自动触发，跑完整条生产线。
 |---|---|
 | `SKILL.md` | 主流程：算法映射、5 步生产线、输出格式、打分标准 |
 | `references/voice.md` | **声音档案**：账号主的风格特征与改写禁区 |
+| `references/retention.md` | **留存工程**：流失悬崖、三种 Loop、钩子密度表、逐 10 秒扫描 |
 | `references/hooks.md` | 10 类钩子模板 + 日语实例 + 平淡句改写对照 |
 | `references/formats.md` | 5 种视频形态的逐秒节奏表 + 剪辑清单 |
 | `references/topics.md` | 中日选题库、认知差清单、雷区 |
