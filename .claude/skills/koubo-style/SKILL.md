@@ -1,0 +1,83 @@
+---
+name: koubo-style
+description: 本人的竖屏短视频剪辑风格与工作流。当用户要剪口播、访谈、Vlog、切片，或要写短视频脚本/文案/金句/钩子时使用。覆盖从脚本到剪映草稿的全流程，自动按内容类型切换口播档与 Vlog 档。
+---
+
+# 竖屏短视频剪辑（本人风格）
+
+用户是中文短视频创作者：**以口播为主，偶尔 Vlog，一律竖屏 9:16**。
+风格参照中文竖屏商业访谈切片那一路（大字幕、关键词高亮、金句卡、快节奏去停顿）。
+
+## 先判断档位
+
+| 信号 | 档位 | 处理 |
+|---|---|---|
+| 对镜说话、访谈、观点输出、知识分享 | **口播档** | 静音切除开启，字幕全程，金句卡 + 话题条 |
+| 出行、探店、生活记录、多场景空镜 | **Vlog 档** | 静音切除**关闭**，字幕按需，BGM 提到 0.25，靠转场推进 |
+
+拿不准就问一句，别猜。
+
+## 口播档
+
+```bash
+python make_talking_head.py --video <素材> --plan plan.json \
+                            --srt <字幕> --bgm <音乐> --name "<草稿名>"
+```
+
+先写 `plan.json`，这是我的活儿：
+
+```json
+{
+  "hook": "开头 3 秒的钩子，一句反常识的问句或结论",
+  "keywords": ["高亮词1", "高亮词2"],
+  "chapters": [{"t": "0s", "text": "① 段落标题"}],
+  "quotes": [{"t": "12s", "text": "金句原文", "d": "3s"}]
+}
+```
+
+写 plan 的原则：
+
+- **hook** 必须是问句或反常识结论，不要复述标题。落在成片前 2.5 秒。
+- **keywords** 3–6 个，挑观点承重的名词，不要挑虚词。高亮是暖黄 + 加粗 + 放大 1.15 倍。
+- **quotes** 一条切片最多 2 条，挑情绪或认知转折点，多了就廉价。
+- **chapters** 只在内容确实分段时加，短切片（<60s）通常不需要。
+- 所有 `t` 按**原素材**计时，脚本会自动重映射到静音切除后的时间轴。
+
+## Vlog 档
+
+用 `edit_video.py`（不切静音、不带钩子/金句那套）：
+
+```bash
+python edit_video.py --video <素材> --srt <字幕> --bgm <音乐> --name "<草稿名>"
+```
+
+要竖屏就在 `presets/koubo.py` 的 `STYLE["canvas"]` 之外单独指定，`edit_video.py`
+会按素材比例自动判横竖。
+
+## 改风格
+
+所有视觉参数集中在 `presets/koubo.py` 的 `STYLE` dict：字号、位置、高亮色、
+BGM 音量、静音阈值。用户说「字幕再大点」「高亮换成红色」「停顿留多一点」，
+改这一个 dict，不要散落到脚本里。
+
+## 硬约束
+
+- **竖屏 1080x1920**，创建 `JyProject` 时必须显式传 `width=1080, height=1920`，
+  否则画布会被素材比例覆盖。
+- **别用 `add_styled_text()` 和 `project.import_srt()`** —— jianying-editor v1.5.0
+  的 `rules/text.md` 写了但代码里没有，调用会 `AttributeError`。花字目前不可用；
+  SRT 走 `project.script.import_srt(...)` 或本仓库的 `parse_srt()`。
+- **文字轨没有自动分层防碰撞** —— `rules/text.md` 声称 "Auto-Layering
+  (Anti-Collision)"，实测重叠会直接抛 `SegmentOverlap`。走
+  `presets/koubo.py` 的 `_add_overlap_safe()`，它会自动降到 `<track>_2` 层。
+- **横屏转竖屏会裁掉约 70% 画幅**（2046px 宽的源只剩约 608px 可见）。用
+  `--subject-x` 挪，或建议用户原生竖屏拍。
+- **别把 ffprobe 软链到 imageio-ffmpeg 的二进制上** —— 那个包只有 ffmpeg，
+  skill 的 `get_duration_ffprobe_cached()` 会静默拿到错误时长。
+- 业务脚本写在**仓库根目录**，不要写进 `.claude/skills/jianying-editor/` 里。
+- 剪映必须是**专业版 v5.9+**，且脚本要在装了剪映的本机跑。
+
+## 还没做的
+
+TTS 配音、云端配乐库、自动导出成片都还没接进这套流程。用户提出来再按
+`.claude/skills/jianying-editor/rules/audio-voice.md` 和 `core.md` 接。

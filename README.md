@@ -25,7 +25,43 @@ winget install Gyan.FFmpeg         # Windows
 > 软链到 ffmpeg 二进制上——skill 的 `get_duration_ffprobe_cached()` 会因此静默拿到
 > 错误时长。
 
-## 剪一个视频
+## 竖屏口播 / 访谈切片（主力流程）
+
+```bash
+python make_talking_head.py --video raw.mp4 --plan plan.json \
+                            --srt raw.srt --bgm bgm.mp3 --name "访谈01"
+```
+
+做的事:
+
+1. **静音切除** —— ffmpeg `silencedetect` 找出说话段,只保留语音,前后各留 0.12s
+   呼吸感。原片 9.5s → 成片 6.5s 这种压缩很常见。
+2. **时间轴重映射** —— `plan.json` 里的时间点按原素材写,脚本自动换算到剪完之后
+   的新时间轴。金句/话题条落进被剪掉的静音会顺延到下一段语音;字幕则直接跳过
+   (字幕跟着语音走,硬挪会对不上口型)。
+3. **关键词高亮字幕** —— `keywords` 里的词自动加粗放大、染成暖黄。
+4. **开场钩子 / 金句卡 / 顶部话题条** —— 各占独立轨道,剪映里能单独调。
+5. **BGM 压到 0.10** —— 口播盖不住人声。
+
+`plan.json` 格式见 `make_talking_head.py` 顶部文档。风格参数全在
+`presets/koubo.py` 的 `STYLE` dict 里,改一处即可全局生效。
+
+Vlog 加 `--no-cut-silence`(保留原始停顿),或用下面的通用流程。
+
+### 横屏素材转竖屏的代价
+
+竖屏画布是 1080x1920。横屏源填满它需要大幅放大——实测 2046x1080 的素材要放大
+**3.37 倍**,画面里只剩约 **608px / 2046px(30%)** 的宽度可见。人不在正中就会被切掉。
+
+脚本会在放大超过 1.05 倍时打印警告。用 `--subject-x` 左右挪(-1~1,正值往右推):
+
+```bash
+python make_talking_head.py --video 横屏.mp4 --subject-x 0.15 ...
+```
+
+**能原生竖屏拍就原生拍**,这一步没有无损方案。
+
+## 剪一个视频（通用）
 
 ```bash
 python edit_video.py --video ~/Movies/raw.mp4 \
@@ -45,9 +81,16 @@ python edit_video.py --video ~/Movies/raw.mp4 \
 
 ### 验证状态
 
-`edit_video.py` 已在 Linux 容器里用 skill 自带的 `assets/video.mp4` + `subtitle.srt` +
-`audio.mp3` 跑通,生成的 `draft_info.json` 含 1 视频轨 / 1 音频轨 / 3 字幕段。**未在装有
-剪映的机器上验证过实际打开效果**——那一步需要你本机跑。
+在 Linux 容器里跑通的部分:
+
+- `edit_video.py` —— 用 skill 自带的 `video.mp4` + `subtitle.srt` + `audio.mp3`,
+  生成的 `draft_info.json` 含 1 视频轨 / 1 音频轨 / 3 字幕段,canvas 自动贴合素材比例。
+- `make_talking_head.py` —— 用合成的「2s 音 + 2s 静 + 2s 音 + 1.5s 静 + 2s 音」测试片:
+  silencedetect 准确识别出 2.02–4.02 与 6.01–7.50 两段静音,主轨切成 3 段,
+  9.5s → 6.5s;画布锁定 1080x1920;超出素材时长、落入静音、顺延标记三种边界都按预期处理。
+
+**没验证的**:草稿在剪映里实际打开的效果、TTS 配音、云端配乐库、自动导出——
+容器里没有剪映,且微软 TTS 端点和云端素材库被网络策略拦截。这些要你本机确认。
 
 ## 更多能力
 
