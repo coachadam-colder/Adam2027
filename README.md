@@ -25,6 +25,19 @@ winget install Gyan.FFmpeg         # Windows
 > 软链到 ffmpeg 二进制上——skill 的 `get_duration_ffprobe_cached()` 会因此静默拿到
 > 错误时长。
 
+## 工作流
+
+```
+写脚本(Claude) → 录制(你) → 剪映智能字幕导出 SRT(你) → 剪辑(Claude) → 剪映里微调(你)
+```
+
+**字幕这一步需要你手动做一次**:jianying-editor skill 没有 ASR 能力,云端环境也跑不了
+语音识别。用剪映自带的智能字幕(中文识别准且免费):原片拖进剪映 → 智能字幕 → 识别字幕
+→ 导出 `.srt`。
+
+**必须在原片上识别,不要先剪。** 剪辑脚本会自动把 SRT 时间轴重映射到切完静音之后的
+新时间轴上。
+
 ## 竖屏口播 / 访谈切片（主力流程）
 
 ```bash
