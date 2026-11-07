@@ -95,6 +95,19 @@ BGM 音量、静音阈值。用户说「字幕再大点」「高亮换成红色�
 `STYLE` 里的数值**最初是按品类惯例设的，没有依据**。用 `.claude/skills/rea-video`
 把它们换成测量值。用户给一条他想对标的参考片就能跑。
 
+### 0. 一条命令跑完（推荐）
+
+```bash
+python calibrate.py --url https://v.douyin.com/xxxxx/   # 本机：先下载再拆
+python calibrate.py --video 参考片.mp4                   # 已有文件
+```
+
+它会下载（可选）→ decompose → 直接打印换算好的 `sub_y` / `sub_color`。
+**`--url` 只能在用户本机跑**：云端会话的网络策略在 CONNECT 层拦截抖音 /
+B站 / 小红书 / YouTube，yt-dlp 装得上但够不着。
+
+下面是手动步骤，`calibrate.py` 不够用时照着做。
+
 ### 1. 拆解参考片
 
 ```bash

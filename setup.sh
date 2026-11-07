@@ -22,6 +22,9 @@ pip install --quiet -r .claude/skills/jianying-editor/requirements.txt || {
   pip install --quiet pymediainfo requests psutil imageio numpy edge-tts opencv-python
 }
 
+echo "==> 装 yt-dlp（calibrate.py --url 用）"
+pip install --quiet yt-dlp
+
 echo "==> 装 rea-video（参考片拆解，用于校准 STYLE）"
 pip install --quiet -e ".claude/skills/rea-video[ocr]" || {
   echo "⚠️ rea-video 带 OCR 装失败，退回不带 OCR 的版本（字幕样式提取会受影响）"

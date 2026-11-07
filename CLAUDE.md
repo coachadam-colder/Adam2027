@@ -19,6 +19,7 @@
 presets/koubo.py                  所有视觉参数集中在 STYLE dict
 edit_video.py                     通用：导入 + 字幕 + BGM
 make_talking_head.py              主力：静音切除 + 时间轴重映射 + 高亮字幕 + 金句卡
+calibrate.py                     参考片（链接或文件）-> STYLE 建议值
 content/PLAN.md                   内容策略
 content/NN-slug/                  每条视频：script.md（逐字稿）+ plan.json（剪辑单）
 ```
