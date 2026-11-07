@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 drafts/
+*.egg-info/
+.eggs/
+build/

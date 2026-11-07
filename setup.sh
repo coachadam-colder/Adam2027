@@ -22,6 +22,16 @@ pip install --quiet -r .claude/skills/jianying-editor/requirements.txt || {
   pip install --quiet pymediainfo requests psutil imageio numpy edge-tts opencv-python
 }
 
+echo "==> 装 rea-video（参考片拆解，用于校准 STYLE）"
+pip install --quiet -e ".claude/skills/rea-video[ocr]" || {
+  echo "⚠️ rea-video 带 OCR 装失败，退回不带 OCR 的版本（字幕样式提取会受影响）"
+  pip install --quiet -e ".claude/skills/rea-video"
+}
+# rapidocr 会顺带装带 GUI 的 opencv-python，和 rea-video 要的 headless 抢同一个 cv2 目录
+pip install --quiet --force-reinstall --no-deps "opencv-python-headless>=4.8,<5"
+python3 -c "import cv2" 2>/dev/null && echo "✅ rea-video $(rea-video --version 2>/dev/null || echo '已装')" \
+  || echo "⚠️ cv2 导入失败，跑 rea-video 前先排查"
+
 echo "==> 检查 ffmpeg / ffprobe"
 if command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null; then
   echo "✅ $(ffmpeg -version | head -1 | cut -c1-40)"

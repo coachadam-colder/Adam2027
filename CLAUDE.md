@@ -14,7 +14,8 @@
 
 ```
 .claude/skills/jianying-editor/   剪映自动化 skill（vendored，v1.5.0，别改）
-.claude/skills/koubo-style/       剪辑风格 + 写脚本规范（本仓库自有）
+.claude/skills/koubo-style/       剪辑风格 + 写脚本规范 + 校准流程（本仓库自有）
+.claude/skills/rea-video/         参考片逆向拆解（vendored，去掉了 83M 演示素材）
 presets/koubo.py                  所有视觉参数集中在 STYLE dict
 edit_video.py                     通用：导入 + 字幕 + BGM
 make_talking_head.py              主力：静音切除 + 时间轴重映射 + 高亮字幕 + 金句卡

@@ -90,6 +90,68 @@ python edit_video.py --video <素材> --srt <字幕> --bgm <音乐> --name "<草
 BGM 音量、静音阈值。用户说「字幕再大点」「高亮换成红色」「停顿留多一点」，
 改这一个 dict，不要散落到脚本里。
 
+## 校准流程（拿参考片反推 STYLE）
+
+`STYLE` 里的数值**最初是按品类惯例设的，没有依据**。用 `.claude/skills/rea-video`
+把它们换成测量值。用户给一条他想对标的参考片就能跑。
+
+### 1. 拆解参考片
+
+```bash
+source .venv/bin/activate
+rea-video decompose 参考片.mp4 -o out/ref           # 离线免费
+rea-video decompose 参考片.mp4 -o out/ref --ocr-lang ja   # 日文字幕用这个
+```
+
+**不需要配 Gemini / 豆包的 key。** 跑完用 `rea-video review out/ref` 生成看图任务，
+你自己（多模态 agent）看 `shots/` 里的帧填答案，再 `rea-video apply-review out/ref --by claude`
+并入。VLM 那条路是给看不了图的 agent 准备的。
+
+### 2. 读测量值
+
+样式在 `out/ref/packaging/timeline.json` 的 `text[]` 里，每条含
+`bbox`（`[x, y, w, h]`，归一化，y 从**顶部**算）、`style.fill`、`style.stroke`、
+`style.stroke_ratio`、`style_zh`（人话版，含字高百分比和像素数）、`anim_in` / `anim_out`。
+
+### 3. 映射到 STYLE
+
+| timeline.json | → STYLE | 验证状态 |
+|---|---|---|
+| `bbox[1] + bbox[3]/2`（y 中心） | `sub_y = 1 - 2 × y中心` | ✅ 实测精确（设 0.859 测得 0.8594） |
+| `bbox[3]`（字高占比） | `sub_size`，按下面的比例法 | ✅ 实测准确（72px 字测得 79px） |
+| `style.fill` | `sub_color`（十六进制转 0–1 三元组） | ✅ 实测准确 |
+| `style.stroke` | 描边色（`presets/koubo.py` 的 `_border()`） | ✅ 实测准确 |
+| `style.stroke_ratio` | 只做横向比较，**别直接当 `sub_border_width`** | ⚠️ 它有自己的定义，不是像素宽 |
+| `anim_in` / `anim_out` | `hook_anim` / `quote_anim` | 未验证 |
+| `rea-video summary` 的「剪辑:」行 | `silence_noise_db` / `silence_min_dur` / `keep_padding` | 未验证 |
+| `rea-video stems` 的 vocals vs music 电平 | `bgm_volume` | 未验证 |
+
+**`sub_y` 换算**：剪映的 `transform_y` 是 -1（底）到 +1（顶），rea-video 的 y 是
+0（顶）到 1（底），所以 `transform_y = 1 - 2 × y中心`。
+例：y中心 0.88 → `sub_y = -0.76`。
+
+**`sub_size` 用比例法，不要猜绝对值**：剪映的字号标度和像素没有公开对应关系。做法是
+闭环——用当前 `STYLE` 生成一条草稿、导出、对导出的成片也跑一次 `decompose`，
+拿到「我们的字高%」，然后
+
+```
+新的 sub_size = 当前 sub_size × (参考片字高% ÷ 我们的字高%)
+```
+
+一轮就能收敛到个位数误差。`hook_size` / `quote_size` / `chapter_size` 同法。
+
+### 4. 改完要做的
+
+改 `presets/koubo.py` 的 `STYLE`，在 dict 上方注释里写明**这组值来自哪条参考片**
+（文件名 + 跑 decompose 的日期），否则下次没人知道哪些是测量值、哪些还是猜的。
+
+### 已知限制
+
+- **文字内容识别不可靠**，但校准不需要它——只用位置、字号、颜色，这三样准。
+- `rea-video` 要完整 ffmpeg + ffprobe，和剪辑脚本同一套依赖。
+- 人脸检测模型首次运行要联网下载；下不动会回退到 Haar，不影响字幕样式提取。
+- 参考片要先下载成本地文件，它不收 URL。
+
 ## 硬约束
 
 - **竖屏 1080x1920**，创建 `JyProject` 时必须显式传 `width=1080, height=1920`，

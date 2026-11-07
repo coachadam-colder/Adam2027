@@ -15,6 +15,11 @@ Write-Host "==> 装依赖"
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet -r .claude\skills\jianying-editor\requirements.txt
 
+Write-Host "==> 装 rea-video（参考片拆解，用于校准 STYLE）"
+python -m pip install --quiet -e ".claude\skills\rea-video[ocr]"
+# rapidocr 会顺带装带 GUI 的 opencv-python，和 rea-video 要的 headless 抢同一个 cv2 目录
+python -m pip install --quiet --force-reinstall --no-deps "opencv-python-headless>=4.8,<5"
+
 Write-Host "==> 检查 ffmpeg / ffprobe"
 $ff = Get-Command ffmpeg -ErrorAction SilentlyContinue
 $fp = Get-Command ffprobe -ErrorAction SilentlyContinue
