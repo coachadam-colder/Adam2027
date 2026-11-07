@@ -5,3 +5,7 @@ drafts/
 *.egg-info/
 .eggs/
 build/
+refs/
+out/
+素材/
+成片/

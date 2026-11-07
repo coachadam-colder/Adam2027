@@ -1,6 +1,42 @@
 # Adam2027
 
-短视频「脚本 → 剪辑」工作流工作区。用 [jianying-editor](https://github.com/luoluoluo22/jianying-editor-skill) skill 驱动剪映(JianYing)专业版。
+短视频「参考片 → 拆文案 → 写脚本 → 剪辑」工作流。用 [jianying-editor](https://github.com/luoluoluo22/jianying-editor-skill) 驱动剪映,用 [rea-video](https://github.com/JuneYaooo/rea-video) 拆参考片。
+
+## Windows 快速开始(装到 E 盘)
+
+PowerShell 里粘这两行:
+
+```powershell
+git clone -b claude/short-video-workflow-skills-6lg4lb https://github.com/coachadam-colder/Adam2027.git E:\Adam2027
+powershell -ExecutionPolicy Bypass -File E:\Adam2027\bootstrap_e.ps1
+```
+
+它会检查 git/python/ffmpeg(缺哪个告诉你 `winget install` 什么)、建 `素材/` `refs/` `成片/`、
+钉死剪映草稿目录、装全部依赖。以后要更新,再跑第二行。
+
+装完打开 **Claude 桌面版 → Claude Code → 选文件夹 `E:\Adam2027`**,直接说话:
+
+- 「学一下这条:https://v.douyin.com/xxxx/」→ 摄取文案 + 拆结构
+- 「用我刚才说的那件事,照这个结构写一条」→ 出逐字稿 + plan.json
+- 「按第 1 条剪:素材\客气.mp4 和 素材\客气.srt」→ 出剪映草稿
+
+> `bootstrap_e.ps1` 和 `setup.ps1` **没在真 Windows 上跑过**(云端没有 Windows,也不允许运行
+> 下载的 PowerShell)。已做:UTF-8 带 BOM、只用 PS 5.1 语法、括号/here-string 静态检查。
+> 跑挂了把报错发我。
+
+## 参考片摄取
+
+```bash
+python extract.py --url https://v.douyin.com/aaa/ --url https://v.douyin.com/bbb/
+```
+
+每条落到 `refs/<日期>-<名字>/`:`transcript.txt`(文案)、`stats.json`(语速/句长/前 3 秒/停顿)、
+`style.json`(字幕位置颜色 + STYLE 建议值)、`decompose/report.html`(完整拆解)。
+
+文案来自**烧录字幕的 OCR**。实测:竖屏噪点背景、白字黑描边单行字幕,6 句 58 字 **100% 准确**,
+时间轴误差 ≤0.1 秒。花字/彩色高亮词/双行字幕没测过。没烧字幕的片子加 `--asr`(未验证)。
+
+`--url` 要在你本机跑——云端会话的网络策略拦截所有视频站。
 
 ## 一次性配置(本机)
 

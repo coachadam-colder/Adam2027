@@ -1,4 +1,4 @@
-# 一次性环境配置（Windows）。macOS / Linux 用 setup.sh。
+﻿# 一次性环境配置（Windows）。macOS / Linux 用 setup.sh。
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 

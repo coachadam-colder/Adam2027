@@ -65,6 +65,21 @@ TRACKS = {
 }
 
 
+def us(seconds):
+    """秒 -> 整数微秒，四舍五入。
+
+    所有时间都要先过这个再交给 jianying-editor。它的 safe_tim() 把 "8.200s" 这类
+    字符串解析成 int(8.2 * 1e6) = 8199999——截断丢掉 1 微秒。前一句字幕按
+    "8.000s" + "0.200s" 算出结尾 8200000，后一句却从 8199999 开始，判重叠，
+    被挤到 Subtitles_2。剪映导出的 SRT 相邻句子几乎都首尾相接，所以会有一批字幕
+    随机在两层之间跳，跳不跳取决于浮点数碰巧往哪边舍。
+
+    safe_tim() 收到 int 按微秒原样返回，所以这边自己 round 成整数，时长一律用
+    「两个整数相减」得出——首尾相接的两段保证落在同一个整数上。
+    """
+    return int(round(seconds * 1_000_000))
+
+
 def _border():
     return draft.TextBorder(color=(0.0, 0.0, 0.0), alpha=1.0, width=STYLE["sub_border_width"])
 
@@ -253,21 +268,21 @@ def lay_speech_segments(project, video_path, speech_ranges, src_wh=None, subject
     返回 (片段列表, 成片时长秒, 裁切放大倍数)。
     """
     segs = []
-    timeline = 0.0
+    timeline_us = 0
     factor = 1.0
     for start, end in speech_ranges:
-        dur = end - start
+        dur_us = us(end) - us(start)
         seg = project.add_media_safe(
             video_path,
-            start_time=f"{timeline:.3f}s",
-            duration=f"{dur:.3f}s",
+            start_time=timeline_us,
+            duration=dur_us,
             track_name=TRACKS["video"],
-            source_start=f"{start:.3f}s",
+            source_start=us(start),
         )
         if seg is None:
             continue
         if src_wh:
             seg, factor = fit_portrait(seg, *src_wh, subject_x=subject_x)
         segs.append(seg)
-        timeline += dur
-    return segs, timeline, factor
+        timeline_us += dur_us
+    return segs, timeline_us / 1_000_000, factor

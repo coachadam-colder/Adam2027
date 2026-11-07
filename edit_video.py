@@ -59,6 +59,17 @@ from jy_wrapper import JyProject  # noqa: E402
 import pyJianYingDraft as draft  # noqa: E402
 
 
+def resolve_drafts_root(cli_value):
+    """草稿目录优先级：--drafts-root > 环境变量 JY_DRAFTS_ROOT > skill 自动探测。
+
+    skill 的自动探测只认 %LOCALAPPDATA% 下的默认位置。用户在剪映设置里把草稿
+    挪到别的盘（比如 E 盘）之后，探测会静默落回一个剪映不读的目录——草稿写进去了，
+    剪映里却看不到，也不报错。用 JY_DRAFTS_ROOT 把位置钉死。
+    """
+    root = cli_value or os.environ.get("JY_DRAFTS_ROOT")
+    return os.path.expanduser(root) if root else None
+
+
 def ensure_media_tools():
     """检查 ffmpeg / ffprobe。
 
@@ -142,7 +153,7 @@ def main():
         args.name,
         width=width,
         height=height,
-        drafts_root=os.path.expanduser(args.drafts_root) if args.drafts_root else None,
+        drafts_root=resolve_drafts_root(args.drafts_root),
         overwrite=True,
     )
 

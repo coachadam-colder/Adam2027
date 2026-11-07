@@ -38,7 +38,7 @@ if sys.platform == "darwin":
 
 from jy_wrapper import JyProject  # noqa: E402
 from presets import koubo  # noqa: E402
-from edit_video import ensure_media_tools, probe_resolution  # noqa: E402
+from edit_video import ensure_media_tools, probe_resolution, resolve_drafts_root  # noqa: E402
 
 
 def probe_duration(path):
@@ -119,7 +119,7 @@ def main():
     ap.add_argument("--srt", help="字幕文件；会自动套用关键词高亮")
     ap.add_argument("--bgm")
     ap.add_argument("--name", default="口播切片")
-    ap.add_argument("--drafts-root")
+    ap.add_argument("--drafts-root", help="剪映草稿目录；不填则读环境变量 JY_DRAFTS_ROOT，再不行自动探测")
     ap.add_argument("--no-cut-silence", action="store_true", help="保留原始停顿,不做静音切除")
     ap.add_argument("--subject-x", type=float, default=0.0,
                     help="横屏转竖屏时水平挪动画面,-1~1,正值往右推。默认 0(居中)")
@@ -151,7 +151,7 @@ def main():
     cw, ch = koubo.STYLE["canvas"]
     project = JyProject(
         args.name, width=cw, height=ch,
-        drafts_root=os.path.expanduser(args.drafts_root) if args.drafts_root else None,
+        drafts_root=resolve_drafts_root(args.drafts_root),
         overwrite=True,
     )
 
@@ -191,13 +191,13 @@ def main():
         t = resolve(parse_time(item["t"]), snap=True)
         if t is None:
             continue
-        koubo.add_chapter(project, item["text"], f"{t:.3f}s", item.get("d", "3s"))
+        koubo.add_chapter(project, item["text"], koubo.us(t), koubo.us(parse_time(item.get("d", "3s"))))
 
     for item in plan.get("quotes", []):
         t = resolve(parse_time(item["t"]), snap=True)
         if t is None:
             continue
-        koubo.add_quote(project, item["text"], f"{t:.3f}s", item.get("d", "3s"))
+        koubo.add_quote(project, item["text"], koubo.us(t), koubo.us(parse_time(item.get("d", "3s"))))
 
     subs = []
     if args.srt:
@@ -225,7 +225,8 @@ def main():
         ne = remap(min(end, total))
         if ne is None or ne <= ns:
             ne = ns + min(end - start, 2.5)
-        koubo.add_subtitle(project, text, f"{ns:.3f}s", f"{ne - ns:.3f}s", keywords)
+        # 时长用两个整数微秒相减：首尾相接的两句会落在同一个整数上，不会被判重叠
+        koubo.add_subtitle(project, text, koubo.us(ns), koubo.us(ne) - koubo.us(ns), keywords)
         placed += 1
     if subs:
         print(f"字幕: {placed}/{len(subs)} 条（高亮词 {keywords or '无'}）")
@@ -241,7 +242,7 @@ def main():
         if os.path.exists(bgm):
             project.add_audio_safe(
                 bgm, start_time="0s", track_name=koubo.TRACKS["bgm"],
-                duration=f"{final_dur:.3f}s", volume=koubo.STYLE["bgm_volume"],
+                duration=koubo.us(final_dur), volume=koubo.STYLE["bgm_volume"],
             )
             print(f"BGM: {os.path.basename(bgm)}（音量 {koubo.STYLE['bgm_volume']}）")
         else:
